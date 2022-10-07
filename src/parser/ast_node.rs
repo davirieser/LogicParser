@@ -2,7 +2,7 @@
 
 /* --------------------------------------------------------------------------------------------- */
 
-use crate::helper::operators::{InfixOperator, UnaryOperator};
+use crate::parser::operators::{InfixOperator, UnaryOperator};
 
 use std::fmt::{Binary, Debug, Display, Formatter};
 
@@ -79,7 +79,15 @@ impl Binary for ASTNode {
             ASTNode::InfixOperation { op, lhs, rhs } => {
                 write!(f, "{:b} {} {:b}", lhs.as_ref(), op, rhs.as_ref())
             }
-            ASTNode::UnaryOperation { op, expr } => write!(f, "{}{:b}", op, expr.as_ref()),
+            ASTNode::UnaryOperation { op, expr } => {
+                let inner_expr_is_infix = matches!(**expr, ASTNode::InfixOperation { .. });
+                write!(f, "{:#}", op);
+                if (inner_expr_is_infix) {
+                    write!(f, "({:b})", expr.as_ref())
+                } else {
+                    write!(f, "{:b}", expr.as_ref())
+                }
+            }
             ASTNode::Identifier(i) => write!(f, "{}", i),
             ASTNode::Literal(l) => write!(f, "{}", l),
             _ => unreachable!(),
@@ -92,7 +100,15 @@ impl Display for ASTNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ASTNode::InfixOperation { op, lhs, rhs } => write!(f, "({} {} {})", lhs, op, rhs),
-            ASTNode::UnaryOperation { op, expr } => write!(f, "{}{}", op, expr.as_ref()),
+            ASTNode::UnaryOperation { op, expr } => {
+                let inner_expr_is_infix = matches!(**expr, ASTNode::InfixOperation { .. });
+                write!(f, "{:#}", op);
+                if (inner_expr_is_infix) {
+                    write!(f, "({})", expr.as_ref())
+                } else {
+                    write!(f, "{}", expr.as_ref())
+                }
+            }
             ASTNode::Identifier(i) => write!(f, "{}", i),
             ASTNode::Literal(l) => write!(f, "{}", l),
             _ => unreachable!(),
@@ -112,16 +128,24 @@ impl ASTNode {
             ASTNode::InfixOperation { op, lhs, rhs } => {
                 write!(f, "(");
                 lhs.fmt_display_names(bindings, f);
-                write!(f, "{}", op);
+                write!(f, "{:#}", op);
                 rhs.fmt_display_names(bindings, f);
                 write!(f, ")")
             }
             ASTNode::UnaryOperation { op, expr } => {
-                write!(f, "{}", op);
-                expr.fmt_display_names(bindings, f)
+                let inner_expr_is_infix = matches!(**expr, ASTNode::InfixOperation { .. });
+                write!(f, "{:#}", op);
+                if (inner_expr_is_infix) {
+                    write!(f, "(");
+                }
+                expr.fmt_binary_names(bindings, f);
+                if (inner_expr_is_infix) {
+                    write!(f, ")");
+                }
+                write!(f, "")
             }
-            ASTNode::Identifier(i) => write!(f, "{}", bindings[*i]),
-            ASTNode::Literal(l) => write!(f, "{}", l),
+            ASTNode::Identifier(i) => write!(f, "{:#}", bindings[*i]),
+            ASTNode::Literal(l) => write!(f, "{:#}", l),
             _ => unreachable!(),
         }
     }
@@ -133,21 +157,19 @@ impl ASTNode {
         bindings: &Vec<&'a str>,
         f: &mut Formatter<'_>,
     ) -> std::fmt::Result {
-        // TODO: Somehow make this be indented?
         match self {
             ASTNode::InfixOperation { op, lhs, rhs } => {
-                write!(f, "InfixOperation {{op: {:?}, lhs: ", op);
+                write!(f, "InfixOperation {{op: {:#?}, lhs: ", op);
                 lhs.fmt_debug_names(bindings, f);
                 write!(f, ", rhs: ");
                 rhs.fmt_debug_names(bindings, f);
                 write!(f, "}}")
             }
             ASTNode::UnaryOperation { op, expr } => {
-                write!(f, "{:?}", op);
-                expr.fmt_debug_names(bindings, f)
+                write!(f, "{:#?}", op)
             }
-            ASTNode::Identifier(i) => write!(f, "\"{}\"", bindings[*i]),
-            ASTNode::Literal(l) => write!(f, "{}", l),
+            ASTNode::Identifier(i) => write!(f, "\"{:#}\"", bindings[*i]),
+            ASTNode::Literal(l) => write!(f, "{:#}", l),
             _ => unreachable!(),
         }
     }
@@ -165,22 +187,30 @@ impl ASTNode {
             ASTNode::InfixOperation { op, lhs, rhs } => {
                 if (f.alternate()) {
                     lhs.fmt_display_names(bindings, f);
-                    write!(f, " {} ", op);
+                    write!(f, " {:#} ", op);
                     rhs.fmt_display_names(bindings, f)
                 } else {
                     write!(f, "(");
                     lhs.fmt_display_names(bindings, f);
-                    write!(f, " {} ", op);
+                    write!(f, " {:#} ", op);
                     rhs.fmt_display_names(bindings, f);
                     write!(f, ")")
                 }
             }
             ASTNode::UnaryOperation { op, expr } => {
-                write!(f, "{}", op);
-                expr.fmt_display_names(bindings, f)
+                let inner_expr_is_infix = matches!(**expr, ASTNode::InfixOperation { .. });
+                write!(f, "{:#}", op);
+                if (inner_expr_is_infix) {
+                    write!(f, "(");
+                }
+                expr.fmt_display_names(bindings, f);
+                if (inner_expr_is_infix) {
+                    write!(f, ")");
+                }
+                write!(f, "")
             }
-            ASTNode::Identifier(i) => write!(f, "{}", bindings[*i]),
-            ASTNode::Literal(l) => write!(f, "{}", l),
+            ASTNode::Identifier(i) => write!(f, "{:#}", bindings[*i]),
+            ASTNode::Literal(l) => write!(f, "{:#}", l),
             _ => unreachable!(),
         }
     }

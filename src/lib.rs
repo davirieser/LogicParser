@@ -1,8 +1,7 @@
-
-mod helper;
+mod parser;
 
 // Reexport public Items
-pub use helper::{
+pub use parser::{
     ast_node::ASTNode,
     operators::{InfixOperator, UnaryOperator},
     parsing::Parsed,
@@ -11,6 +10,6 @@ pub use helper::{
 #[cfg(test)]
 mod tests {
     pub use super::*;
-    pub use helper::ast_node::ASTNode;
-    pub use helper::operators::InfixOperator;
+    pub use parser::ast_node::ASTNode;
+    pub use parser::operators::InfixOperator;
 }

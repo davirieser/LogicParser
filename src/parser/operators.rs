@@ -2,7 +2,7 @@
 
 /* --------------------------------------------------------------------------------------------- */
 
-use crate::helper::ast_node::ASTNode;
+use crate::parser::ast_node::ASTNode;
 use std::fmt::{Debug, Display, Formatter};
 
 /* --------------------------------------------------------------------------------------------- */
@@ -25,7 +25,7 @@ trait Operator {
 
 /* --------------------------------------------------------------------------------------------- */
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum UnaryOperator {
     Not,
 }
@@ -45,6 +45,15 @@ impl Operator for UnaryOperator {
     }
     fn precedence(&self) -> usize {
         0
+    }
+}
+
+impl Debug for UnaryOperator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UnaryOperator::Not => write!(f, "Not"),
+            _ => unreachable!(),
+        }
     }
 }
 

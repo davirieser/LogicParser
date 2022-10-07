@@ -2,7 +2,7 @@
 
 /* --------------------------------------------------------------------------------------------- */
 
-use crate::helper::{
+use crate::parser::{
     ast_node::ASTNode,
     operators::{InfixOperator, UnaryOperator},
 };
@@ -103,7 +103,7 @@ impl<'a> Debug for Parsed<'a> {
         if f.alternate() {
             self.expression.fmt_debug_names(&self.var_bindings, f)
         } else {
-            write!(f, "{:#?}", self.expression)
+            write!(f, "{:?}", self.expression)
         }
     }
 }
