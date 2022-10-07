@@ -1,0 +1,40 @@
+
+// -------------------------------------------------------------------------- //
+
+_start = _{ SOI ~ Expression ~ EOI }
+
+// -------------------------------------------------------------------------- //
+
+OperationImplication = { "->" }
+
+OperationOr  = { ^"OR"  | "|" | "+" }
+OperationAnd = { ^"AND" | "&" | "*" }
+
+OperationNot = { "~" | "!" }
+
+OperationAndOr = { OperationOr | OperationAnd }
+
+UnaryOperation = { OperationNot }
+
+// -------------------------------------------------------------------------- //
+
+Expression = { AndOrExpression ~ (OperationAndOr ~ AndOrExpression)* }
+
+AndOrExpression = { ImplicationExpression ~ (OperationAndOr ~ ImplicationExpression)* }
+ImplicationExpression = { UnaryExpression ~ (OperationImplication ~ UnaryExpression)* }
+UnaryExpression = { UnaryOperation? ~ PrimaryExpression | UnaryOperation ~ UnaryExpression }
+PrimaryExpression = { "(" ~ Expression ~ ")" | Variable }
+
+// -------------------------------------------------------------------------- //
+
+Variable = { Literal | Identifier }
+
+Identifier = @{ ASCII_ALPHA+ }
+
+Literal = @{ ^"true" | ^"false" }
+
+// -------------------------------------------------------------------------- //
+
+WHITESPACE = _{ " " | "\t" }
+
+// -------------------------------------------------------------------------- //
