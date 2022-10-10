@@ -1,5 +1,6 @@
 #![allow(dead_code, unused)]
 
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Index, IndexMut, Not, Shr, ShrAssign};
 
 #[derive(Debug, Clone, Copy)]
@@ -11,9 +12,25 @@ pub enum TruthValue {
 
 impl From<TruthValue> for bool {
     fn from(t: TruthValue) -> Self {
-        match t {
-            TruthValue::DontCare | TruthValue::True => true,
-            _ => false,
+        matches!(t, TruthValue::DontCare | TruthValue::True)
+    }
+}
+
+impl From<bool> for TruthValue {
+    fn from(b: bool) -> TruthValue {
+        match b {
+            true => TruthValue::True,
+            false => TruthValue::False,
+        }
+    }
+}
+
+impl Display for TruthValue {
+    fn fmt(&self, f: Formatter) -> std::fmt::Result {
+        match self {
+            TruthValue::DontCare => write!(f, "X"),
+            TruthValue::False => write!(f, "F"),
+            TruthValue::True => write!(f, "T"),
         }
     }
 }
@@ -23,8 +40,8 @@ impl BitAnd for TruthValue {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
+            (TruthValue::False, _) | (_, TruthValue::False) => TruthValue::False,
             (TruthValue::True, other) | (other, TruthValue::True) => other,
-            (TruthValue::False, other) | (other, TruthValue::False) => TruthValue::False,
             (_, _) => TruthValue::DontCare,
         }
     }
@@ -40,8 +57,8 @@ impl BitOr for TruthValue {
 
     fn bitor(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
+            (TruthValue::True, _) | (_, TruthValue::True) => TruthValue::True,
             (TruthValue::False, other) | (other, TruthValue::False) => other,
-            (TruthValue::True, other) | (other, TruthValue::True) => TruthValue::True,
             (_, _) => TruthValue::DontCare,
         }
     }
@@ -71,8 +88,7 @@ impl Shr for TruthValue {
 
     fn shr(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (TruthValue::False, _) => TruthValue::True,
-            (_, TruthValue::True) => TruthValue::True,
+            (TruthValue::False, _) | (_, TruthValue::True) => TruthValue::True,
             (TruthValue::True, other) => other,
             (_, _) => TruthValue::DontCare,
         }
